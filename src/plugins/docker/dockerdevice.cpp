@@ -831,8 +831,15 @@ bool DockerDevicePrivate::isImageAvailable() const
 
 CommandLine DockerDevicePrivate::createCommandLine()
 {
-    const QString display = HostOsInfo::isLinuxHost() ? QString(":0")
-                                                      : QString("host.docker.internal:0");
+    const QString display = HostOsInfo::isLinuxHost() ? 
+                            QString(qEnvironmentVariable("DISPLAY", ":0")) :
+                            QString("host.docker.internal:0");
+
+    const QString xauthority = HostOsInfo::isLinuxHost() ?
+                               QString(qEnvironmentVariable("XAUTHORITY",
+                                                            qEnvironmentVariable("HOME", "") + "/.Xauthority")) :
+                               QString("/.Xauthority");
+
     CommandLine dockerCreate{settings().dockerBinaryPath(),
                              {"create",
                               "-i",
@@ -840,7 +847,7 @@ CommandLine DockerDevicePrivate::createCommandLine()
                               "-e",
                               QString("DISPLAY=%1").arg(display),
                               "-e",
-                              "XAUTHORITY=/.Xauthority"}};
+                              QString("XAUTHORITY=%1").arg(xauthority)};
 
 #ifdef Q_OS_UNIX
     // no getuid() and getgid() on Windows.
